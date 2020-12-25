@@ -7,9 +7,17 @@ char *Box_Drawings[] = {
     "├─",
     "│  ",
     "    "};
-char *cmdhelp[] = {"help       查看帮助",
-                   "exit       退出程序",
-                   "ls         列出子目录"};
+char *cmdhelp[20] = {"命令              功能                 示例"
+                     "help             查看帮助              help",
+                     "exit             退出程序              exit",
+                     "ls               列出子目录            ls",
+                     "cd               切换目录              cd 杭电、cd ..",
+                     "create           在当前目录创建新目录   create 计算机学院",
+                     "addschool        创建学校              addschool 杭电",
+                     "addcollege       创建学院              addcollege 杭电 卓越学院",
+                     "addmajor         创建专业              addmajor 杭电 卓越学院 计科"
+                     "addclass         创建班级              addclass 杭电 卓越学院 计科 19184115"
+                     "addstudent       创建学生              addstudent 杭电 卓越学院 计科 19184115 张三"};
 int lastline;
 char *head;
 //光标移动
@@ -50,10 +58,10 @@ void prhead(tree p)
         strcat(head, " $ ");
     }
     gotoxy(0, lastline + 1);
-    printf("%50s\r", " ");
+    printf("%80s\r", " ");
     printf("%s", head);
 }
-void printerface()
+void printerface(tree p)
 {
     gotoxy(0, 0);
     puts("*********************************************************学生管理系统********************************");
@@ -68,7 +76,7 @@ void printerface()
     puts("*****************************************************************************************************");
     gotoxy(105, 0);
     puts("help获取帮助");
-    prhead(NULL);
+    prhead(p);
 }
 
 int addschool(tree root, char *schoolname)
@@ -79,13 +87,17 @@ int addcollege(tree root, char *schoolname, char *collegename)
 {
     return addnode(find(root, schoolname), collegename, NULL);
 }
-int addclass(tree root, char *schoolname, char *collegename, char *classname)
+int addmajor(tree root, char *schoolname, char *collegename, char *majorname)
 {
-    return addnode(find(find(root, schoolname), collegename), classname, NULL);
+    return addnode(find(find(root, schoolname), collegename), majorname, NULL);
 }
-int addstudent(tree root, char *schoolname, char *collegename, char *classname, char *studentname, student *data)
+int addclass(tree root, char *schoolname, char *collegename, char *majorname, char *classname)
 {
-    return addnode(find(find(find(root, schoolname), collegename), classname), studentname, data);
+    return addnode(find(find(find(root, schoolname), collegename), majorname), classname, NULL);
+}
+int addstudent(tree root, char *schoolname, char *collegename, char *majorname, char *classname, char *studentname, student *data)
+{
+    return addnode(find(find(find(find(root, schoolname), collegename), majorname), classname), studentname, data);
 }
 int prtree(tree p)
 {
@@ -96,7 +108,20 @@ int prtree(tree p)
     prtree(p->firstchild);
     return TRUE;
 }
-int prstudent(tree p, int flag1, int flag2, int flag3)
+int prstudent(tree p, int flag1, int flag2, int flag3, int flag4)
+{
+    if (!p)
+        return FALSE;
+    tree q = p->firstchild;
+    while (q)
+    {
+        lastline++;
+        int flag5 = q->nextsib ? 1 : 0;
+        printf("*%4s%4s%4s%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2 ? 2 : 3], Box_Drawings[flag3 ? 2 : 3], Box_Drawings[flag4 ? 2 : 3], Box_Drawings[flag5], q->str);
+        q = q->nextsib;
+    }
+}
+int prclass(tree p, int flag1, int flag2, int flag3)
 {
     if (!p)
         return FALSE;
@@ -106,10 +131,11 @@ int prstudent(tree p, int flag1, int flag2, int flag3)
         lastline++;
         int flag4 = q->nextsib ? 1 : 0;
         printf("*%4s%4s%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2 ? 2 : 3], Box_Drawings[flag3 ? 2 : 3], Box_Drawings[flag4], q->str);
+        prstudent(q, flag1, flag2, flag3, flag4);
         q = q->nextsib;
     }
 }
-int prclass(tree p, int flag1, int flag2)
+int prmajor(tree p, int flag1, int flag2)
 {
     if (!p)
         return FALSE;
@@ -119,7 +145,7 @@ int prclass(tree p, int flag1, int flag2)
         lastline++;
         int flag3 = q->nextsib ? 1 : 0;
         printf("*%4s%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2 ? 2 : 3], Box_Drawings[flag3], q->str);
-        prstudent(q, flag1, flag2, flag3);
+        prclass(q, flag1, flag2, flag3);
         q = q->nextsib;
     }
 }
@@ -133,7 +159,7 @@ int prcollege(tree p, int flag1)
         lastline++;
         int flag2 = q->nextsib ? 1 : 0;
         printf("*%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2], q->str);
-        prclass(q, flag1, flag2);
+        prmajor(q, flag1, flag2);
         q = q->nextsib;
     }
 }
@@ -153,8 +179,12 @@ int prschool(tree root)
         p = p->nextsib;
     }
 }
-
-
+void update(tree root, tree p)
+{
+    system("cls");
+    prschool(root);
+    printerface(p);
+}
 void cls()
 {
     for (int i = 1; i < lastline; i++)
@@ -165,7 +195,7 @@ void cls()
     prhead(NULL);
 }
 
-int update(tree p)
+int ls(tree p)
 {
     if (!p)
         return FALSE;
@@ -185,11 +215,51 @@ void help()
 {
     cls();
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 11; i++)
     {
         gotoxy(50, 5 + i);
         puts(cmdhelp[i]);
     }
+}
+int cd(tree *p)
+{
+    if (!p || !*p)
+        return FALSE;
+    int t;
+    char a[100];
+    tree tmp;
+    if ((t = scanf("%s", a)) == 1)
+    {
+
+        if (!strcmp(a, "..") && (*p)->parents)
+        {
+            *p = (*p)->parents;
+            ls(*p);
+            return TRUE;
+        }
+        if (tmp = find(*p, a))
+        {
+
+            *p = tmp;
+            ls(*p);
+            return TRUE;
+        }
+        return FALSE;
+    }
+    return FALSE;
+}
+int create(tree *p, tree root)
+{
+    char a[100];
+    if (scanf("%s", a) == 1)
+        if (addnode(*p, a, NULL))
+        {
+            *p = find(*p, a);
+            update(root, *p);
+            ls(*p);
+            return TRUE;
+        }
+    return FALSE;
 }
 int main()
 {
@@ -206,17 +276,21 @@ int main()
     addcollege(root, "杭电", "计算机学院");
     addcollege(root, "杭电", "经济学院");
     addcollege(root, "杭电", "人艺数法");
-    addclass(root, "杭电", "卓越学院", "19184111");
-    addclass(root, "杭电", "卓越学院", "19184112");
-    addclass(root, "杭电", "卓越学院", "19184113");
-    addclass(root, "杭电", "卓越学院", "19184114");
-    addclass(root, "杭电", "卓越学院", "19184115");
-    addstudent(root, "杭电", "卓越学院", "19184115", "张三", NULL);
-    addstudent(root, "杭电", "卓越学院", "19184115", "李四", NULL);
-    addstudent(root, "杭电", "卓越学院", "19184115", "王五", NULL);
+    addmajor(root, "杭电", "卓越学院", "计科");
+    addclass(root, "杭电", "卓越学院", "计科", "19184111");
+    addclass(root, "杭电", "卓越学院", "计科", "19184112");
+    addclass(root, "杭电", "卓越学院", "计科", "19184113");
+    addclass(root, "杭电", "卓越学院", "计科", "19184114");
+    addclass(root, "杭电", "卓越学院", "计科", "19184115");
+    addstudent(root, "杭电", "卓越学院", "计科", "19184115", "张三", NULL);
+    addstudent(root, "杭电", "卓越学院", "计科", "19184115", "李四", NULL);
+    addstudent(root, "杭电", "卓越学院", "计科", "19184115", "王五", NULL);
+    addmajor(root, "杭电", "卓越学院", "会计");
+    addmajor(root, "杭电", "计算机学院", "计科");
+    addmajor(root, "杭电", "计算机学院", "软工");
     addschool(root, "浙大");
     prschool(root);
-    printerface();
+    printerface(NULL);
     // cls();
     // update(root);
     help();
@@ -245,7 +319,11 @@ int main()
         if (!strcmp(cmd, "help"))
             help();
         else if (!strcmp(cmd, "ls"))
-            update(p);
+            ls(p);
+        else if (!strcmp(cmd, "cd"))
+            cd(&p);
+        else if (!strcmp(cmd, "create"))
+            create(&p, root);
         prhead(NULL);
     }
     system("pause");

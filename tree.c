@@ -40,13 +40,13 @@ tree find(tree p, char *name)
         return NULL;
     if (p->firstchild)
     {
-        if (p->firstchild->str == name)
+        if (!strcmp(p->firstchild->str, name))
             return p->firstchild;
         p = p->firstchild;
         while (p->nextsib)
         {
 
-            if (p->nextsib->str == name)
+            if (!strcmp(p->nextsib->str, name))
                 return p->nextsib;
             p = p->nextsib;
         }

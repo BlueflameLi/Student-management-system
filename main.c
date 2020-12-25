@@ -7,7 +7,7 @@ char *Box_Drawings[] = {
     "├─",
     "│  ",
     "    "};
-char *cmdhelp[20] = {"命令              功能                 示例"
+char *cmdhelp[20] = {"命令              功能                 示例",
                      "help             查看帮助              help",
                      "exit             退出程序              exit",
                      "ls               列出子目录            ls",
@@ -15,8 +15,8 @@ char *cmdhelp[20] = {"命令              功能                 示例"
                      "create           在当前目录创建新目录   create 计算机学院",
                      "addschool        创建学校              addschool 杭电",
                      "addcollege       创建学院              addcollege 杭电 卓越学院",
-                     "addmajor         创建专业              addmajor 杭电 卓越学院 计科"
-                     "addclass         创建班级              addclass 杭电 卓越学院 计科 19184115"
+                     "addmajor         创建专业              addmajor 杭电 卓越学院 计科",
+                     "addclass         创建班级              addclass 杭电 卓越学院 计科 19184115",
                      "addstudent       创建学生              addstudent 杭电 卓越学院 计科 19184115 张三"};
 int lastline;
 char *head;
@@ -64,17 +64,17 @@ void prhead(tree p)
 void printerface(tree p)
 {
     gotoxy(0, 0);
-    puts("*********************************************************学生管理系统********************************");
+    puts("*******************************************************************学生管理系统******************************************");
     for (int i = 1; i < lastline; i++)
     {
-        gotoxy(25, i);
+        gotoxy(35, i);
         putchar('*');
-        gotoxy(100, i);
+        gotoxy(120, i);
         putchar('*');
     }
     gotoxy(0, lastline);
-    puts("*****************************************************************************************************");
-    gotoxy(105, 0);
+    puts("*************************************************************************************************************************");
+    gotoxy(125, 0);
     puts("help获取帮助");
     prhead(p);
 }
@@ -189,8 +189,8 @@ void cls()
 {
     for (int i = 1; i < lastline; i++)
     {
-        gotoxy(26, i);
-        puts("                                                                          ");
+        gotoxy(36, i);
+        puts("                                                                                    ");
     }
     prhead(NULL);
 }
@@ -217,7 +217,7 @@ void help()
 
     for (int i = 0; i < 11; i++)
     {
-        gotoxy(50, 5 + i);
+        gotoxy(38, 2 + i);
         puts(cmdhelp[i]);
     }
 }
@@ -263,6 +263,12 @@ int create(tree *p, tree root)
 }
 int main()
 {
+    puts("请最大化");
+    {
+        char ch;
+        while ((ch = getchar()) != '\n')
+            ;
+    }
     tree root = createnode();
     tree p = root;
     head = (char *)malloc(100 * sizeof(char));

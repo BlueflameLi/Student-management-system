@@ -4,7 +4,7 @@ tree createnode()
 {
     tree p = (node *)malloc(sizeof(node));
     p->data = NULL;
-    p->str = NULL;
+    p->str = (char *)malloc(100 * sizeof(char));
     p->firstchild = p->nextsib = p->parents = NULL;
 }
 int addnode(tree p, char *name, student *data)
@@ -14,7 +14,7 @@ int addnode(tree p, char *name, student *data)
         if (!p->firstchild)
         {
             p->firstchild = createnode();
-            p->firstchild->str = name;
+            strcpy(p->firstchild->str, name);
             p->firstchild->data = data;
             p->firstchild->parents = p;
         }
@@ -24,7 +24,7 @@ int addnode(tree p, char *name, student *data)
             while (q->nextsib)
                 q = q->nextsib;
             q->nextsib = createnode();
-            q->nextsib->str = name;
+            strcpy(q->nextsib->str, name);
             q->nextsib->data = data;
             q->nextsib->parents = p;
         }

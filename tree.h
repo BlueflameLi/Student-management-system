@@ -12,6 +12,7 @@ typedef struct node
     char *str;
     student *data;
     struct node *firstchild, *nextsib, *parents;
+    int depth;
 } node, *tree;
 
 //创建节点

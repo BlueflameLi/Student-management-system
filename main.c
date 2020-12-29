@@ -1,23 +1,24 @@
 //the coding is GB2312
 #include "tree.h"
 #include <Windows.h>
-
+#define MINLINE (lastline < 30 ? 30 : lastline)
 char *Box_Drawings[] = {
     "└─",
     "├─",
     "│  ",
-    "    "};
-char *cmdhelp[20] = {"命令              功能                 示例",
-                     "help             查看帮助              help",
-                     "exit             退出程序              exit",
-                     "ls               列出子目录            ls",
-                     "cd               切换目录              cd 杭电、cd ..",
-                     "create           在当前目录创建新目录   create 计算机学院",
-                     "addschool        创建学校              addschool 杭电",
-                     "addcollege       创建学院              addcollege 杭电 卓越学院",
-                     "addmajor         创建专业              addmajor 杭电 卓越学院 计科",
-                     "addclass         创建班级              addclass 杭电 卓越学院 计科 19184115",
-                     "addstudent       创建学生              addstudent 杭电 卓越学院 计科 19184115 张三"};
+    "   "};
+char *cmdhelp[20] = {"命令              功能              示例",
+                     "help             查看帮助           help",
+                     "exit             退出程序           exit",
+                     "ls               列出子目录         ls",
+                     "cd               切换目录           cd 杭电、cd ..",
+                     "create           新建目录           create 计算机学院",
+                     "addschool        创建学校           addschool 杭电",
+                     "addcollege       创建学院           addcollege 杭电 卓越学院",
+                     "addmajor         创建专业           addmajor 杭电 卓越学院 计科",
+                     "addclass         创建班级           addclass 杭电 卓越学院 计科 19184115",
+                     "addstudent       创建学生           addstudent 杭电 卓越学院 计科 19184115 张三",
+                     "cat              查看信息           cat 张三"};
 int lastline;
 char *head;
 //光标移动
@@ -57,22 +58,25 @@ void prhead(tree p)
         prfa(p);
         strcat(head, " $ ");
     }
-    gotoxy(0, lastline + 1);
-    printf("%80s\r", " ");
+    gotoxy(0, MINLINE + 1);
+    printf("%80s\n", " ");
+    printf("%80s\n", " ");
+    printf("%80s\n", " ");
+    gotoxy(0, MINLINE + 1);
     printf("%s", head);
 }
 void printerface(tree p)
 {
     gotoxy(0, 0);
     puts("*******************************************************************学生管理系统******************************************");
-    for (int i = 1; i < lastline; i++)
+    for (int i = 1; i < MINLINE; i++)
     {
         gotoxy(35, i);
         putchar('*');
         gotoxy(120, i);
         putchar('*');
     }
-    gotoxy(0, lastline);
+    gotoxy(0, MINLINE);
     puts("*************************************************************************************************************************");
     gotoxy(125, 0);
     puts("help获取帮助");
@@ -99,16 +103,7 @@ int addstudent(tree root, char *schoolname, char *collegename, char *majorname, 
 {
     return addnode(find(find(find(find(root, schoolname), collegename), majorname), classname), studentname, data);
 }
-int prtree(tree p)
-{
-    if (!p)
-        return FALSE;
-    puts(p->str);
-    prtree(p->nextsib);
-    prtree(p->firstchild);
-    return TRUE;
-}
-int prstudent(tree p, int flag1, int flag2, int flag3, int flag4)
+int prtree2(tree p, int *flag, int depth)
 {
     if (!p)
         return FALSE;
@@ -116,78 +111,36 @@ int prstudent(tree p, int flag1, int flag2, int flag3, int flag4)
     while (q)
     {
         lastline++;
-        int flag5 = q->nextsib ? 1 : 0;
-        printf("*%4s%4s%4s%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2 ? 2 : 3], Box_Drawings[flag3 ? 2 : 3], Box_Drawings[flag4 ? 2 : 3], Box_Drawings[flag5], q->str);
+        flag[depth] = q->nextsib ? 1 : 0;
+        putchar('*');
+        for (int i = 0; i < depth; i++)
+            printf("%s", Box_Drawings[flag[i] ? 2 : 3]);
+        printf("%s %s\n", Box_Drawings[flag[depth]], q->str);
+        prtree2(q, flag, depth + 1);
         q = q->nextsib;
     }
 }
-int prclass(tree p, int flag1, int flag2, int flag3)
-{
-    if (!p)
-        return FALSE;
-    tree q = p->firstchild;
-    while (q)
-    {
-        lastline++;
-        int flag4 = q->nextsib ? 1 : 0;
-        printf("*%4s%4s%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2 ? 2 : 3], Box_Drawings[flag3 ? 2 : 3], Box_Drawings[flag4], q->str);
-        prstudent(q, flag1, flag2, flag3, flag4);
-        q = q->nextsib;
-    }
-}
-int prmajor(tree p, int flag1, int flag2)
-{
-    if (!p)
-        return FALSE;
-    tree q = p->firstchild;
-    while (q)
-    {
-        lastline++;
-        int flag3 = q->nextsib ? 1 : 0;
-        printf("*%4s%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2 ? 2 : 3], Box_Drawings[flag3], q->str);
-        prclass(q, flag1, flag2, flag3);
-        q = q->nextsib;
-    }
-}
-int prcollege(tree p, int flag1)
-{
-    if (!p)
-        return FALSE;
-    tree q = p->firstchild;
-    while (q)
-    {
-        lastline++;
-        int flag2 = q->nextsib ? 1 : 0;
-        printf("*%4s%4s %s\n", Box_Drawings[flag1 ? 2 : 3], Box_Drawings[flag2], q->str);
-        prmajor(q, flag1, flag2);
-        q = q->nextsib;
-    }
-}
-int prschool(tree root)
+int prtree(tree root)
 {
     gotoxy(0, 1);
+    for (int i = 1; i < MINLINE; i++)
+        puts("*                                  ");
+    gotoxy(0, 1);
     lastline = 1;
-    if (!root)
-        return FALSE;
-    tree p = root->firstchild;
-    while (p)
-    {
-        lastline++;
-        int flag = p->nextsib ? 1 : 0;
-        printf("*%s %s\n", Box_Drawings[flag], p->str);
-        prcollege(p, flag);
-        p = p->nextsib;
-    }
+    int flag[5] = {0};
+    prtree2(root, flag, 0);
+    for (int i = lastline; i < MINLINE; i++)
+        puts("*");
 }
 void update(tree root, tree p)
 {
     system("cls");
-    prschool(root);
+    prtree(root);
     printerface(p);
 }
 void cls()
 {
-    for (int i = 1; i < lastline; i++)
+    for (int i = 1; i < MINLINE; i++)
     {
         gotoxy(36, i);
         puts("                                                                                    ");
@@ -215,7 +168,7 @@ void help()
 {
     cls();
 
-    for (int i = 0; i < 11; i++)
+    for (int i = 0; i < 12; i++)
     {
         gotoxy(38, 2 + i);
         puts(cmdhelp[i]);
@@ -252,6 +205,9 @@ int create(tree *p, tree root)
 {
     char a[100];
     if (scanf("%s", a) == 1)
+    {
+        if (find(*p, a))
+            return FALSE;
         if (addnode(*p, a, NULL))
         {
             *p = find(*p, a);
@@ -259,6 +215,7 @@ int create(tree *p, tree root)
             ls(*p);
             return TRUE;
         }
+    }
     return FALSE;
 }
 int main()
@@ -295,7 +252,7 @@ int main()
     addmajor(root, "杭电", "计算机学院", "计科");
     addmajor(root, "杭电", "计算机学院", "软工");
     addschool(root, "浙大");
-    prschool(root);
+    prtree(root);
     printerface(NULL);
     // cls();
     // update(root);
@@ -330,6 +287,46 @@ int main()
             cd(&p);
         else if (!strcmp(cmd, "create"))
             create(&p, root);
+        else if (!strcmp(cmd, "addschool"))
+        {
+            int t;
+            char a[100];
+            if ((t = scanf("%s", a)) == 1)
+                addschool(root, a);
+            prtree(root);
+        }
+        else if (!strcmp(cmd, "addcollege"))
+        {
+            int t;
+            char a[2][100];
+            if ((t = scanf("%s%s", a[0], a[1])) == 2)
+                addcollege(root, a[0], a[1]);
+            prtree(root);
+        }
+        else if (!strcmp(cmd, "addmajor"))
+        {
+            int t;
+            char a[3][100];
+            if ((t = scanf("%s%s%s", a[0], a[1], a[3])) == 3)
+                addmajor(root, a[0], a[1], a[3]);
+            prtree(root);
+        }
+        else if (!strcmp(cmd, "addclass"))
+        {
+            int t;
+            char a[4][100];
+            if ((t = scanf("%s%s%s%s", a[0], a[1], a[2], a[3])) == 4)
+                addclass(root, a[0], a[1], a[2], a[3]);
+            prtree(root);
+        }
+        else if (!strcmp(cmd, "addstudent"))
+        {
+            int t;
+            char a[5][100];
+            if ((t = scanf("%s%s%s%s%s", a[0], a[1], a[2], a[3], a[4])) == 5)
+                addstudent(root, a[0], a[1], a[2], a[3], a[4], NULL);
+            prtree(root);
+        }
         prhead(NULL);
     }
     system("pause");

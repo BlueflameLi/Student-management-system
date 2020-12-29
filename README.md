@@ -7,3 +7,12 @@
 新增ls命令  
 新增exit命令  
 
+# 2.0
+新增cd命令  
+新增create命令  
+新增addschool命令  
+新增addcollege命令  
+新增addmajor命令  
+新增addclass命令  
+新增addstudent命令  
+重构了绘制树的函数  

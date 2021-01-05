@@ -18,9 +18,16 @@ char *cmdhelp[20] = {"命令              功能              示例",
                      "addmajor         创建专业           addmajor 杭电 卓越学院 计科",
                      "addclass         创建班级           addclass 杭电 卓越学院 计科 19184115",
                      "addstudent       创建学生           addstudent 杭电 卓越学院 计科 19184115 张三",
-                     "cat              查看信息           cat 张三"};
+                     "lr               统计               lr 卓越学院、lr all"};
 int lastline;
 char *head;
+char *lrstr[5] = {
+    "共计%d个学校",
+    "共计%d个学院",
+    "共计%d个专业",
+    "共计%d个班级",
+    "共计%d个学生"};
+char *catstr[10] = {"姓名：%s", "性别：%s", "年龄：%s", "学校：%s", "学院：%s", "专业：%s", "班级：%s", "学号：%s"};
 //光标移动
 void gotoxy(unsigned char x, unsigned char y)
 {
@@ -147,21 +154,59 @@ void cls()
     }
     prhead(NULL);
 }
+int cat(tree p)
+{
+    if (!p || p->depth != 5)
+        return FALSE;
+    cls();
+    int i = 0;
+    gotoxy(50, 5 + i);
+    printf(catstr[i++], p->str);
+    gotoxy(50, 5 + i);
+    if (p->data)
+        printf(catstr[i++], p->data->sex ? "男" : "女");
+    else
+        printf(catstr[i++], "不详");
+    gotoxy(50, 5 + i);
+    if (p->data)
+        printf(catstr[i++], p->data->age);
+    else
+        printf(catstr[i++], "不详");
+    gotoxy(50, 5 + i);
+    printf(catstr[i++], p->parents->parents->parents->parents->str);
+    gotoxy(50, 5 + i);
+    printf(catstr[i++], p->parents->parents->parents->str);
+    gotoxy(50, 5 + i);
+    printf(catstr[i++], p->parents->parents->str);
+    gotoxy(50, 5 + i);
+    printf(catstr[i++], p->parents->str);
+    gotoxy(50, 5 + i);
+    if (p->data)
+        printf(catstr[i++], p->data->ID);
+    else
+        printf(catstr[i++], "不详");
+    return TRUE;
+}
 
 int ls(tree p)
 {
     if (!p)
         return FALSE;
-    cls();
-    tree q = p->firstchild;
-    int k = 0;
-    while (q)
+    if (p->depth == 5)
+        cat(p);
+    else
     {
-        gotoxy(50, 5 + k);
-        printf("%d.%s", ++k, q->str);
-        q = q->nextsib;
+        cls();
+        tree q = p->firstchild;
+        int k = 0;
+        while (q)
+        {
+            gotoxy(50, 5 + k);
+            printf("%d.%s", ++k, q->str);
+            q = q->nextsib;
+        }
+        prhead(p);
     }
-    prhead(p);
     return TRUE;
 }
 void help()
@@ -174,6 +219,7 @@ void help()
         puts(cmdhelp[i]);
     }
 }
+
 int cd(tree *p)
 {
     if (!p || !*p)
@@ -218,6 +264,41 @@ int create(tree *p, tree root)
     }
     return FALSE;
 }
+int lr2(tree p, int *a)
+{
+    if (!p)
+        return FALSE;
+    if (p->firstchild)
+        lr2(p->firstchild, a);
+    a[p->depth]++;
+
+    if (p->nextsib)
+    {
+        p = p->nextsib;
+        lr2(p, a);
+    }
+    return TRUE;
+}
+int lr(tree p)
+{
+    if (!p)
+        return FALSE;
+    cls();
+    if (p->depth == 5)
+        return FALSE;
+
+    int a[6];
+    memset(a, 0, sizeof(a));
+    lr2(p->firstchild, a);
+
+    for (int i = 5; i > p->depth; i--)
+    {
+        gotoxy(50, 5 + 5 - i);
+        printf(lrstr[p->depth + 5 - i], a[p->depth + 5 - i + 1]);
+    }
+    return TRUE;
+}
+
 int main()
 {
     puts("请最大化");
@@ -227,6 +308,7 @@ int main()
             ;
     }
     tree root = createnode();
+    root->depth = 0;
     tree p = root;
     head = (char *)malloc(100 * sizeof(char));
     strcpy(head, "root@root : ～  $ ");
@@ -252,29 +334,9 @@ int main()
     addmajor(root, "杭电", "计算机学院", "计科");
     addmajor(root, "杭电", "计算机学院", "软工");
     addschool(root, "浙大");
-    prtree(root);
-    printerface(NULL);
-    // cls();
-    // update(root);
+    update(root, NULL);
     help();
     prhead(NULL);
-    // printf("%s %s\n", Box_Drawings[0], "杭电");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "理学院");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "机械学院");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "自动化学院");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "卓越学院");
-    // printf("%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[1], "19184111");
-    // printf("%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[1], "19184112");
-    // printf("%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[1], "19184113");
-    // printf("%4s%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[2], Box_Drawings[1], "张三");
-    // printf("%4s%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[2], Box_Drawings[1], "李四");
-    // printf("%4s%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[2], Box_Drawings[0], "王五");
-    // printf("%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[1], "19184114");
-    // printf("%4s%4s%4s %s\n", Box_Drawings[3], Box_Drawings[2], Box_Drawings[0], "19184115");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "材环学院");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "计算机学院");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[1], "经济学院");
-    // printf("%4s%4s %s\n", Box_Drawings[3], Box_Drawings[0], "人艺数法");
 
     char *cmd = (char *)malloc(100 * sizeof(char));
     while (~scanf("%s", cmd) && strcmp(cmd, "exit"))
@@ -326,6 +388,25 @@ int main()
             if ((t = scanf("%s%s%s%s%s", a[0], a[1], a[2], a[3], a[4])) == 5)
                 addstudent(root, a[0], a[1], a[2], a[3], a[4], NULL);
             prtree(root);
+        }
+        else if (!strcmp(cmd, "lr"))
+        {
+            int t;
+            char a[100];
+            if ((t = scanf("%s", a)) == 1)
+            {
+                if (!strcmp(a, "all"))
+                    lr(root);
+                else
+                    lr(find(p, a));
+            }
+        }
+        else if (!strcmp(cmd, "cat"))
+        {
+            int t;
+            char a[100];
+            if ((t = scanf("%s", a)) == 1)
+                cat(find(p, a));
         }
         prhead(NULL);
     }

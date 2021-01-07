@@ -13,12 +13,10 @@ char *cmdhelp[20] = {"命令              功能              示例",
                      "ls               列出子目录         ls",
                      "cd               切换目录           cd 杭电、cd ..",
                      "create           新建目录           create 计算机学院",
-                     "addschool        创建学校           addschool 杭电",
-                     "addcollege       创建学院           addcollege 杭电 卓越学院",
-                     "addmajor         创建专业           addmajor 杭电 卓越学院 计科",
-                     "addclass         创建班级           addclass 杭电 卓越学院 计科 19184115",
-                     "addstudent       创建学生           addstudent 杭电 卓越学院 计科 19184115 张三",
-                     "lr               统计               lr 卓越学院、lr all"};
+                     "rm               删除目录           rm 卓越学院",
+                     "lr               统计               lr 卓越学院、lr all",
+                     "rename           修改名字           rename 杭电 杭州电子科大",
+                     "modify           修改学生信息       modify 学号 "};
 int lastline;
 char *head;
 char *lrstr[5] = {
@@ -213,39 +211,67 @@ void help()
 {
     cls();
 
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 10; i++)
     {
         gotoxy(38, 2 + i);
         puts(cmdhelp[i]);
     }
 }
-
-int cd(tree *p)
+int cd(tree *p, char *cmd, tree root)
 {
     if (!p || !*p)
         return FALSE;
     int t;
-    char a[100];
-    tree tmp;
-    if ((t = scanf("%s", a)) == 1)
-    {
 
-        if (!strcmp(a, "..") && (*p)->parents)
-        {
-            *p = (*p)->parents;
-            ls(*p);
-            return TRUE;
-        }
-        if (tmp = find(*p, a))
+    if (!strcmp(cmd, "..") && (*p)->parents)
+    {
+        *p = (*p)->parents;
+        return TRUE;
+    }
+
+    if (*cmd != '/' && *cmd != '\\')
+    {
+        tree tmp;
+        if (tmp = find(*p, cmd))
         {
 
             *p = tmp;
-            ls(*p);
             return TRUE;
         }
         return FALSE;
     }
-    return FALSE;
+    tree q = root;
+    char *tmp = (char *)malloc(100 * sizeof(char));
+    int flag = 1;
+    while (*cmd)
+    {
+        cmd++;
+        int k = 0;
+        while (*cmd && *cmd != '/' && *cmd != '\\')
+        {
+            cmd++;
+            k++;
+        }
+
+        if (k)
+        {
+            cmd -= k;
+            strncpy(tmp, cmd, k);
+            tmp[k] = '\0';
+            cmd += k;
+            tree t;
+            if (t = find(q, tmp))
+                q = t;
+            else
+            {
+                flag = 0;
+                break;
+            }
+        }
+    }
+    if (flag)
+        *p = q;
+    return flag;
 }
 int create(tree *p, tree root)
 {
@@ -299,6 +325,43 @@ int lr(tree p)
     return TRUE;
 }
 
+int rm(tree p, char *name)
+{
+    if (!p)
+        return FALSE;
+    if (p->firstchild)
+    {
+        p = p->firstchild;
+        if (!strcmp(p->str, name))
+        {
+            p->parents->firstchild = p->nextsib;
+            return TRUE;
+        }
+
+        while (p->nextsib)
+        {
+            if (!strcmp(p->nextsib->str, name))
+            {
+                p->nextsib = p->nextsib->nextsib;
+                return TRUE;
+            }
+            p = p->nextsib;
+        }
+    }
+    return FALSE;
+}
+int renme(tree p, char *name1, char *name2)
+{
+    if (!p)
+        return FALSE;
+    p = find(p, name1);
+    if (p)
+    {
+        strcpy(p->str, name2);
+        return TRUE;
+    }
+    return FALSE;
+}
 int main()
 {
     puts("请最大化");
@@ -339,57 +402,23 @@ int main()
     prhead(NULL);
 
     char *cmd = (char *)malloc(100 * sizeof(char));
-    while (~scanf("%s", cmd) && strcmp(cmd, "exit"))
+    while (gets(cmd) && strcmp(cmd, "exit"))
     {
         if (!strcmp(cmd, "help"))
             help();
         else if (!strcmp(cmd, "ls"))
             ls(p);
-        else if (!strcmp(cmd, "cd"))
-            cd(&p);
-        else if (!strcmp(cmd, "create"))
+        else if (!strncmp(cmd, "cd ", 3))
+        {
+            char *tmp = cmd + 2;
+            while (*tmp == ' ')
+                tmp++;
+            if (*tmp && cd(&p, tmp, root))
+                ls(p);
+        }
+        else if (!strncmp(cmd, "create ", 7))
             create(&p, root);
-        else if (!strcmp(cmd, "addschool"))
-        {
-            int t;
-            char a[100];
-            if ((t = scanf("%s", a)) == 1)
-                addschool(root, a);
-            prtree(root);
-        }
-        else if (!strcmp(cmd, "addcollege"))
-        {
-            int t;
-            char a[2][100];
-            if ((t = scanf("%s%s", a[0], a[1])) == 2)
-                addcollege(root, a[0], a[1]);
-            prtree(root);
-        }
-        else if (!strcmp(cmd, "addmajor"))
-        {
-            int t;
-            char a[3][100];
-            if ((t = scanf("%s%s%s", a[0], a[1], a[3])) == 3)
-                addmajor(root, a[0], a[1], a[3]);
-            prtree(root);
-        }
-        else if (!strcmp(cmd, "addclass"))
-        {
-            int t;
-            char a[4][100];
-            if ((t = scanf("%s%s%s%s", a[0], a[1], a[2], a[3])) == 4)
-                addclass(root, a[0], a[1], a[2], a[3]);
-            prtree(root);
-        }
-        else if (!strcmp(cmd, "addstudent"))
-        {
-            int t;
-            char a[5][100];
-            if ((t = scanf("%s%s%s%s%s", a[0], a[1], a[2], a[3], a[4])) == 5)
-                addstudent(root, a[0], a[1], a[2], a[3], a[4], NULL);
-            prtree(root);
-        }
-        else if (!strcmp(cmd, "lr"))
+        else if (!strncmp(cmd, "lr ", 3))
         {
             int t;
             char a[100];
@@ -401,12 +430,22 @@ int main()
                     lr(find(p, a));
             }
         }
-        else if (!strcmp(cmd, "cat"))
+        else if (!strncmp(cmd, "cat ", 4))
         {
             int t;
             char a[100];
             if ((t = scanf("%s", a)) == 1)
                 cat(find(p, a));
+        }
+        else if (!strncmp(cmd, "rm ", 3))
+        {
+            int t;
+            char a[100];
+            if ((t = scanf("%s", a)) == 1 && rm(p, a))
+            {
+                update(root, p);
+                ls(p);
+            }
         }
         prhead(NULL);
     }

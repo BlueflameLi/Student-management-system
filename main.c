@@ -7,16 +7,19 @@ char *Box_Drawings[] = {
     "├─",
     "│  ",
     "   "};
-char *cmdhelp[20] = {"命令              功能              示例",
-                     "help             查看帮助           help",
-                     "exit             退出程序           exit",
-                     "ls               列出子目录         ls",
-                     "cd               切换目录           cd 杭电、cd ..",
-                     "create           新建目录           create 计算机学院",
-                     "rm               删除目录           rm 卓越学院",
-                     "lr               统计               lr 卓越学院、lr all",
-                     "rename           修改名字           rename 杭电 杭州电子科大",
-                     "modify           修改学生信息       modify 学号 "};
+char *cmdhelp[20] = {"命令            功能              示例",
+                     "help           查看帮助           help",
+                     "exit           退出程序           exit",
+                     "ls             列出子目录         ls",
+                     "cd [name]      进入子目录         cd 卓越学院",
+                     "cd ..          进入父目录         cd ..",
+                     "cd [dir]       进入指定目录       cd /杭电/卓越学院、cd ./计科、cd ../计科",
+                     "create [name]  新建目录           create 计算机学院",
+                     "create [dir]   在指定目录新建      同cd [dir]",
+                     "rm             删除目录           rm 卓越学院",
+                     "lr             统计               lr 卓越学院、lr all",
+                     "rename         修改名字           rename 杭电 杭州电子科大",
+                     "modify         修改学生信息       modify 学号 "};
 int lastline;
 char *head;
 char *lrstr[5] = {
@@ -64,9 +67,9 @@ void prhead(tree p)
         strcat(head, " $ ");
     }
     gotoxy(0, MINLINE + 1);
-    printf("%80s\n", " ");
-    printf("%80s\n", " ");
-    printf("%80s\n", " ");
+    printf("%100s\n", " ");
+    printf("%100s\n", " ");
+    printf("%100s\n", " ");
     gotoxy(0, MINLINE + 1);
     printf("%s", head);
 }
@@ -203,8 +206,8 @@ int ls(tree p)
             printf("%d.%s", ++k, q->str);
             q = q->nextsib;
         }
-        prhead(p);
     }
+    prhead(p);
     return TRUE;
 }
 void help()
@@ -217,76 +220,98 @@ void help()
         puts(cmdhelp[i]);
     }
 }
-int cd(tree *p, char *cmd, tree root)
+int strcut(char *str, char *token[])
 {
-    if (!p || !*p)
-        return FALSE;
-    int t;
+    token[0] = strtok(str, "/");
+    int i = 0;
+    while (token[i] != NULL)
+        token[++i] = strtok(NULL, "/");
 
-    if (!strcmp(cmd, "..") && (*p)->parents)
+    return i - 1;
+}
+tree finddir(tree p, tree root, char *str)
+{
+    if (!p)
+        return FALSE;
+
+    if (!strcmp(str, ".."))
     {
-        *p = (*p)->parents;
-        return TRUE;
+        if (p->parents)
+            return p->parents;
+        return NULL;
+    }
+    if (!strcmp(str, "."))
+        return p;
+
+    if (!strncmp(str, "../", 3))
+    {
+        if (!p->parents)
+            return NULL;
+        root = p->parents;
+        str += 2;
+    }
+    else if (!strncmp(str, "./", 2))
+    {
+        root = p;
+        str++;
     }
 
-    if (*cmd != '/' && *cmd != '\\')
-    {
-        tree tmp;
-        if (tmp = find(*p, cmd))
-        {
+    if (*str != '/')
+        return find(p, str);
 
-            *p = tmp;
-            return TRUE;
-        }
-        return FALSE;
-    }
     tree q = root;
-    char *tmp = (char *)malloc(100 * sizeof(char));
-    int flag = 1;
-    while (*cmd)
-    {
-        cmd++;
-        int k = 0;
-        while (*cmd && *cmd != '/' && *cmd != '\\')
+    char *token[6];
+    str++;
+    int k = strcut(str, token);
+    int flag = TRUE;
+    if (~k)
+        for (int i = 0; i <= k; i++)
         {
-            cmd++;
-            k++;
-        }
-
-        if (k)
-        {
-            cmd -= k;
-            strncpy(tmp, cmd, k);
-            tmp[k] = '\0';
-            cmd += k;
             tree t;
-            if (t = find(q, tmp))
+            if (t = find(q, token[i]))
                 q = t;
             else
             {
-                flag = 0;
+                flag = FALSE;
                 break;
             }
         }
-    }
     if (flag)
-        *p = q;
-    return flag;
+        return q;
+    return NULL;
 }
-int create(tree *p, tree root)
+int cd(tree *p, char *str, tree root)
 {
-    char a[100];
-    if (scanf("%s", a) == 1)
+    if (!p || !*p)
+        return FALSE;
+    tree q = finddir(*p, root, str);
+    if (q)
     {
-        if (find(*p, a))
-            return FALSE;
-        if (addnode(*p, a, NULL))
+        *p = q;
+        return TRUE;
+    }
+    return FALSE;
+}
+int create(tree *p, char *str, tree root)
+{
+
+    char *tmp = strrchr(str, '/');
+
+    if (tmp == str)
+        str = "/";
+    else
+        *tmp = '\0';
+    tmp++;
+
+    tree q;
+    if (q = finddir(*p, root, str))
+    {
+        if (!find(q, tmp) && addnode(q, tmp, NULL))
         {
-            *p = find(*p, a);
-            update(root, *p);
-            ls(*p);
+            *p = q;
             return TRUE;
         }
+        return FALSE;
     }
     return FALSE;
 }
@@ -417,26 +442,18 @@ int main()
                 ls(p);
         }
         else if (!strncmp(cmd, "create ", 7))
-            create(&p, root);
-        else if (!strncmp(cmd, "lr ", 3))
         {
-            int t;
-            char a[100];
-            if ((t = scanf("%s", a)) == 1)
+            char *tmp = cmd + 6;
+            while (*tmp == ' ')
+                tmp++;
+            if (*tmp && create(&p, tmp, root))
             {
-                if (!strcmp(a, "all"))
-                    lr(root);
-                else
-                    lr(find(p, a));
+                update(root, p);
+                ls(p);
             }
         }
-        else if (!strncmp(cmd, "cat ", 4))
-        {
-            int t;
-            char a[100];
-            if ((t = scanf("%s", a)) == 1)
-                cat(find(p, a));
-        }
+        else if (!strcmp(cmd, "lr"))
+            lr(p);
         else if (!strncmp(cmd, "rm ", 3))
         {
             int t;

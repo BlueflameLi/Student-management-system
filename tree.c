@@ -12,6 +12,8 @@ int addnode(tree p, char *name, student *data)
 {
     if (p)
     {
+        if (p->depth == 5)
+            return FALSE;
         if (!p->firstchild)
         {
             p->firstchild = createnode();

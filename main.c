@@ -12,12 +12,12 @@ char *cmdhelp[20] = {"命令            功能              示例",
                      "exit           退出程序           exit",
                      "ls             列出子目录         ls",
                      "cd [name]      进入子目录         cd 卓越学院",
-                     "cd ..          进入父目录         cd ..",
                      "cd [dir]       进入指定目录       cd /杭电/卓越学院、cd ./计科、cd ../计科",
-                     "create [name]  新建目录           create 计算机学院",
-                     "create [dir]   在指定目录新建      同cd [dir]",
-                     "rm             删除目录           rm 卓越学院",
-                     "lr             统计               lr 卓越学院、lr all",
+                     "create [name]  新建               create 计算机学院",
+                     "create [dir]   在指定目录新建     参考cd [dir]",
+                     "rm [name]      删除               rm 卓越学院",
+                     "rm [dir]       删除指定目录       参考create [dir]",
+                     "lr             统计               lr",
                      "rename         修改名字           rename 杭电 杭州电子科大",
                      "modify         修改学生信息       modify 学号 "};
 int lastline;
@@ -214,7 +214,7 @@ void help()
 {
     cls();
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 13; i++)
     {
         gotoxy(38, 2 + i);
         puts(cmdhelp[i]);
@@ -297,6 +297,15 @@ int create(tree *p, char *str, tree root)
 
     char *tmp = strrchr(str, '/');
 
+    if (!tmp)
+    {
+        if (!find(*p, str) && addnode(*p, str, NULL))
+        {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
     if (tmp == str)
         str = "/";
     else
@@ -350,28 +359,32 @@ int lr(tree p)
     return TRUE;
 }
 
-int rm(tree p, char *name)
+int rm(tree *p, char *str, tree root)
 {
-    if (!p)
+    if (!p && !*p)
         return FALSE;
-    if (p->firstchild)
+    tree q;
+    if ((q = finddir(*p, root, str)) && q->parents)
     {
-        p = p->firstchild;
-        if (!strcmp(p->str, name))
+        *p = q->parents;
+        if (q == q->parents->firstchild)
         {
-            p->parents->firstchild = p->nextsib;
-            return TRUE;
+            q->parents->firstchild = q->nextsib;
         }
-
-        while (p->nextsib)
+        else
         {
-            if (!strcmp(p->nextsib->str, name))
+            tree tmp = q->parents->firstchild;
+            while (tmp->nextsib)
             {
-                p->nextsib = p->nextsib->nextsib;
-                return TRUE;
+                if (tmp->nextsib == q)
+                {
+                    tmp->nextsib = q->nextsib;
+                    break;
+                }
+                tmp = tmp->nextsib;
             }
-            p = p->nextsib;
         }
+        return TRUE;
     }
     return FALSE;
 }
@@ -435,7 +448,7 @@ int main()
             ls(p);
         else if (!strncmp(cmd, "cd ", 3))
         {
-            char *tmp = cmd + 2;
+            char *tmp = cmd + 3;
             while (*tmp == ' ')
                 tmp++;
             if (*tmp && cd(&p, tmp, root))
@@ -443,7 +456,7 @@ int main()
         }
         else if (!strncmp(cmd, "create ", 7))
         {
-            char *tmp = cmd + 6;
+            char *tmp = cmd + 7;
             while (*tmp == ' ')
                 tmp++;
             if (*tmp && create(&p, tmp, root))
@@ -456,9 +469,10 @@ int main()
             lr(p);
         else if (!strncmp(cmd, "rm ", 3))
         {
-            int t;
-            char a[100];
-            if ((t = scanf("%s", a)) == 1 && rm(p, a))
+            char *tmp = cmd + 3;
+            while (*tmp == ' ')
+                tmp++;
+            if (*tmp && rm(&p, tmp, root))
             {
                 update(root, p);
                 ls(p);

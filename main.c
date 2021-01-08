@@ -7,19 +7,29 @@ char *Box_Drawings[] = {
     "├─",
     "│  ",
     "   "};
-char *cmdhelp[20] = {"命令            功能              示例",
-                     "help           查看帮助           help",
-                     "exit           退出程序           exit",
-                     "ls             列出子目录         ls",
-                     "cd [name]      进入子目录         cd 卓越学院",
-                     "cd [dir]       进入指定目录       cd /杭电/卓越学院、cd ./计科、cd ../计科",
-                     "create [name]  新建               create 计算机学院",
-                     "create [dir]   在指定目录新建     参考cd [dir]",
-                     "rm [name]      删除               rm 卓越学院",
-                     "rm [dir]       删除指定目录       参考create [dir]",
-                     "lr             统计               lr",
-                     "rename         修改名字           rename 杭电 杭州电子科大",
-                     "modify         修改学生信息       modify 学号 "};
+char *cmdhelp[20] = {"命令                 功能              示例",
+                     "help                查看帮助           help",
+                     "exit                退出程序           exit",
+                     "ls                  列出子目录         ls",
+                     "cd [name]           进入子目录         cd 卓越学院",
+                     "cd [dir]            进入指定目录       cd /杭电/卓越学院、cd ./计科、cd ../计科",
+                     "create [name]       新建               create 计算机学院",
+                     "create [dir]        在指定目录新建     参考cd [dir]",
+                     "rm [name]           删除               rm 卓越学院",
+                     "rm [dir]            删除指定目录       参考create [dir]",
+                     "lr                  统计               lr",
+                     "rename [newname]    当前目录重命名     rename 杭州电子科大",
+                     "modify [parm] [str] 修改学生信息       modify -n 张三",
+                     "modify -help        查看modify帮助     modify -help"};
+char *modifyhelp[10] = {
+    "命令                 功能              示例",
+    "modify -n [name]  修改学生姓名         modify -n 张三",
+    "modify -id [id]   修改学生学号         modify -id 19180101",
+    "modify -sex [sex] 修改学生性别         modify -sex 男、modify -sex 女",
+    "modify -age [age] 修改学生年龄         modify -age 18",
+    "modify -help      查看modify帮助       modify -help",
+    "注：除help参数外，其他参数可任意组合使用,例如modify -n 张三 -sex 女 -age 18"};
+
 int lastline;
 char *head;
 char *lrstr[5] = {
@@ -214,18 +224,18 @@ void help()
 {
     cls();
 
-    for (int i = 0; i < 13; i++)
+    for (int i = 0; i < 14; i++)
     {
         gotoxy(38, 2 + i);
         puts(cmdhelp[i]);
     }
 }
-int strcut(char *str, char *token[])
+int strcut(char *str, char *token[], char *delim)
 {
-    token[0] = strtok(str, "/");
+    token[0] = strtok(str, delim);
     int i = 0;
     while (token[i] != NULL)
-        token[++i] = strtok(NULL, "/");
+        token[++i] = strtok(NULL, delim);
 
     return i - 1;
 }
@@ -262,7 +272,7 @@ tree finddir(tree p, tree root, char *str)
     tree q = root;
     char *token[6];
     str++;
-    int k = strcut(str, token);
+    int k = strcut(str, token, "/");
     int flag = TRUE;
     if (~k)
         for (int i = 0; i <= k; i++)
@@ -388,16 +398,26 @@ int rm(tree *p, char *str, tree root)
     }
     return FALSE;
 }
-int renme(tree p, char *name1, char *name2)
+int renme(tree p, char *newname)
 {
-    if (!p)
+    if (!p || !newname)
         return FALSE;
-    p = find(p, name1);
-    if (p)
-    {
-        strcpy(p->str, name2);
-        return TRUE;
-    }
+
+    strcpy(p->str, newname);
+    return TRUE;
+}
+int modify(tree p, char *str)
+{
+    if (!p || p->depth != 5)
+        return FALSE;
+    if (*str != '-')
+        return FALSE;
+    char *token[10];
+    int k = strcut(str, token, " ");
+    printf("%d\n", k);
+    for (int j = 0; j <= k; j++)
+        for (int i = 0; i < 3; i++)
+            printf("%s\n", token[j]);
     return FALSE;
 }
 int main()
@@ -465,14 +485,45 @@ int main()
                 ls(p);
             }
         }
-        else if (!strcmp(cmd, "lr"))
-            lr(p);
         else if (!strncmp(cmd, "rm ", 3))
         {
             char *tmp = cmd + 3;
             while (*tmp == ' ')
                 tmp++;
             if (*tmp && rm(&p, tmp, root))
+            {
+                update(root, p);
+                ls(p);
+            }
+        }
+        else if (!strcmp(cmd, "lr"))
+            lr(p);
+        else if (!strncmp(cmd, "rename ", 7))
+        {
+            char *tmp = cmd + 7;
+            while (*tmp == ' ')
+                tmp++;
+            if (*tmp && p != root && renme(p, tmp))
+            {
+                update(root, p);
+                ls(p);
+            }
+        }
+        else if (!strncmp(cmd, "modify ", 7))
+        {
+            char *tmp = cmd + 7;
+            while (*tmp == ' ')
+                tmp++;
+            if (!strcmp(tmp, "-help"))
+            {
+                cls();
+                for (int i = 0; i < 7; i++)
+                {
+                    gotoxy(38, 5 + i);
+                    puts(modifyhelp[i]);
+                }
+            }
+            else if (*tmp && modify(p, tmp))
             {
                 update(root, p);
                 ls(p);

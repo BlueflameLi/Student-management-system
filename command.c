@@ -16,7 +16,9 @@ char *cmdhelp[20] = {"命令                 功能              示例",
                      "modify -help        查看modify帮助     modify -help",
                      "mv [dir] [dir]      学生转学籍         mv ./19184115/张三 ../会计/19184211",
                      "find [parm] [str]   查找学生           find  -college 计算机学院 -n 张三",
-                     "find -help          查看find帮助       find -help"};
+                     "find -help          查看find帮助       find -help",
+                     "undo                撤销               undo"};
+
 //modify帮助
 char *modifyhelp[10] = {
     "命令                 功能              示例",
@@ -162,7 +164,7 @@ void help()
 {
     cls();
 
-    for (int i = 0; i < 17; i++)
+    for (int i = 0; i < 18; i++)
     {
         gotoxy(38, 2 + i);
         puts(cmdhelp[i]);
@@ -478,6 +480,10 @@ int modify(tree p, char *str)
         u.cmd = 4;
         u.data = p;
         u.data2 = NULL;
+        if (p->data)
+            u.stu = *(p->data);
+        else
+            u.stu.age = u.stu.ID = u.stu.sex = -1;
 
         if (name)
         {
@@ -496,7 +502,6 @@ int modify(tree p, char *str)
                 p->data->age = p->data->ID = p->data->sex = -1;
             }
 
-            u.stu = *(p->data);
             if (~sex)
                 p->data->sex = sex;
             if (~age)
@@ -504,8 +509,6 @@ int modify(tree p, char *str)
             if (~id)
                 p->data->ID = id;
         }
-        else
-            u.stu.age = u.stu.ID = u.stu.sex = -1;
 
         push(&undoStack, u);
 
@@ -847,7 +850,7 @@ int undo()
         }
         else if (u.cmd == 4)
         {
-            if (~u.stu.sex || ~u.stu.ID || ~u.stu.age)
+            if (u.data->data)
                 *(u.data->data) = u.stu;
             if (u.str)
             {

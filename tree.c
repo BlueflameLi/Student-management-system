@@ -1,5 +1,8 @@
+//the coding is UTF-8
+
 #include "tree.h"
 
+//创建节点
 tree createnode()
 {
     tree p = (node *)malloc(sizeof(node));
@@ -8,6 +11,8 @@ tree createnode()
     p->firstchild = p->nextsib = p->parents = NULL;
     p->depth = -1;
 }
+
+//p添加一个儿子
 int addnode(tree p, char *name, student *data)
 {
     if (p)

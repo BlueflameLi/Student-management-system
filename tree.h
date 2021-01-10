@@ -1,3 +1,5 @@
+//the coding is UTF-8
+
 #ifndef _TREE_H_
 #define _TREE_H_
 
@@ -9,10 +11,10 @@
 #define FALSE 0
 typedef struct node
 {
-    char *str;
-    student *data;
+    char *str;     //名称
+    student *data; //仅叶子节点使用
     struct node *firstchild, *nextsib, *parents;
-    int depth;
+    int depth; //深度
 } node, *tree;
 
 //创建节点

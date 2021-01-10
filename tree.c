@@ -10,6 +10,7 @@ tree createnode()
     p->str = (char *)malloc(100 * sizeof(char));
     p->firstchild = p->nextsib = p->parents = NULL;
     p->depth = -1;
+    return p;
 }
 
 //p添加一个儿子

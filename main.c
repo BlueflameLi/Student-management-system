@@ -9,11 +9,14 @@ int main()
         while ((ch = getchar()) != '\n')
             ;
     }
+
     tree root = createnode();
     root->depth = 0;
     tree p = root;
     head = (char *)malloc(100 * sizeof(char));
     strcpy(head, "root@root : ～  $ ");
+    InitStack(&undoStack);
+
     addschool(root, "杭电");
     addcollege(root, "杭电", "理学院");
     addcollege(root, "杭电", "机械学院");
@@ -36,6 +39,7 @@ int main()
     addmajor(root, "杭电", "计算机学院", "计科");
     addmajor(root, "杭电", "计算机学院", "软工");
     addschool(root, "浙大");
+
     update(root, NULL);
     help();
     prhead(NULL);
@@ -123,6 +127,9 @@ int main()
             else if (*tmp)
                 search(p, root, tmp);
         }
+        else if (!strcmp(cmd, "undo"))
+            if (undo())
+                update(root, p);
         prhead(NULL);
     }
     system("pause");

@@ -268,6 +268,13 @@ int create(tree *p, char *str, tree root)
     {
         if (!find(*p, str) && addnode(*p, str, NULL))
         {
+            unit u;
+            u.cmd = 1;
+            u.data = find(*p, str);
+            u.data2 = NULL;
+            u.str = NULL;
+            push(&undoStack, u);
+
             return TRUE;
         }
         return FALSE;
@@ -284,6 +291,13 @@ int create(tree *p, char *str, tree root)
     {
         if (!find(q, tmp) && addnode(q, tmp, NULL))
         {
+            unit u;
+            u.cmd = 1;
+            u.data = find(q, tmp);
+            u.data2 = NULL;
+            u.str = NULL;
+            push(&undoStack, u);
+
             *p = q;
             return TRUE;
         }
@@ -348,9 +362,7 @@ int rm(tree *p, char *str, tree root)
     {
         *p = q->parents;
         if (q == q->parents->firstchild)
-        {
             q->parents->firstchild = q->nextsib;
-        }
         else
         {
             tree tmp = q->parents->firstchild;
@@ -364,6 +376,14 @@ int rm(tree *p, char *str, tree root)
                 tmp = tmp->nextsib;
             }
         }
+
+        unit u;
+        u.cmd = 2;
+        u.data = q;
+        u.data2 = NULL;
+        u.str = NULL;
+        push(&undoStack, u);
+
         return TRUE;
     }
 
@@ -375,6 +395,14 @@ int renme(tree p, char *newname)
 {
     if (!p || !newname)
         return FALSE;
+
+    unit u;
+    u.cmd = 3;
+    u.data = p;
+    u.data2 = NULL;
+    u.str = (char *)malloc(100 * sizeof(char));
+    strcpy(u.str, p->str);
+    push(&undoStack, u);
 
     strcpy(p->str, newname);
 
@@ -446,8 +474,20 @@ int modify(tree p, char *str)
         if (flag)
             return FALSE;
 
+        unit u;
+        u.cmd = 4;
+        u.data = p;
+        u.data2 = NULL;
+
         if (name)
-            renme(p, name);
+        {
+            u.str = (char *)malloc(100 * sizeof(char));
+            strcpy(u.str, p->str);
+            strcpy(p->str, name);
+        }
+        else
+            u.str = NULL;
+
         if (~sex || ~age || ~id)
         {
             if (!p->data)
@@ -455,10 +495,20 @@ int modify(tree p, char *str)
                 p->data = (student *)malloc(sizeof(student));
                 p->data->age = p->data->ID = p->data->sex = -1;
             }
-            p->data->sex = sex;
-            p->data->age = age;
-            p->data->ID = id;
+
+            u.stu = *(p->data);
+            if (~sex)
+                p->data->sex = sex;
+            if (~age)
+                p->data->age = age;
+            if (~id)
+                p->data->ID = id;
         }
+        else
+            u.stu.age = u.stu.ID = u.stu.sex = -1;
+
+        push(&undoStack, u);
+
         return TRUE;
     }
     return FALSE;
@@ -493,6 +543,14 @@ int mv(tree p, tree root, char *str)
                     tmp = tmp->nextsib;
                 }
             }
+
+            unit u;
+            u.cmd = 5;
+            u.data = createnode();
+            *u.data = *p1;
+            u.data2 = p2;
+            u.str = NULL;
+            push(&undoStack, u);
 
             p1->parents = p2;
             p1->nextsib = NULL;
@@ -744,6 +802,88 @@ int search(tree p, tree root, char *str)
             else
                 printf("%s", "²»Ïê");
         }
+        return TRUE;
+    }
+    return FALSE;
+}
+
+//³·Ïú
+int undo()
+{
+    if (!StackEmpty(&undoStack))
+    {
+        unit u = *gettop(&undoStack);
+        pop(&undoStack);
+        if (u.cmd == 1)
+        {
+            if (u.data == u.data->parents->firstchild)
+                u.data->parents->firstchild = u.data->nextsib;
+            else
+            {
+                tree p = u.data->parents->firstchild;
+                while (p->nextsib && p->nextsib != u.data)
+                    p = p->nextsib;
+                if (p->nextsib)
+                    p->nextsib = u.data->nextsib;
+            }
+            free(u.data);
+        }
+        else if (u.cmd == 2)
+        {
+            if (!u.data->parents->firstchild || u.data->parents->firstchild == u.data->nextsib)
+                u.data->parents->firstchild = u.data;
+            else
+            {
+                tree p = u.data->parents->firstchild;
+                while (p->nextsib && p->nextsib != u.data->nextsib)
+                    p = p->nextsib;
+                p->nextsib = u.data;
+            }
+        }
+        else if (u.cmd == 3)
+        {
+            strcpy(u.data->str, u.str);
+            free(u.str);
+        }
+        else if (u.cmd == 4)
+        {
+            if (~u.stu.sex || ~u.stu.ID || ~u.stu.age)
+                *(u.data->data) = u.stu;
+            if (u.str)
+            {
+                strcpy(u.data->str, u.str);
+                free(u.str);
+            }
+        }
+        else if (u.cmd == 5)
+        {
+            tree p = u.data2->firstchild;
+            while (p->nextsib && p->nextsib->nextsib)
+                p = p->nextsib;
+            if (p->nextsib)
+            {
+                free(p->nextsib);
+                p->nextsib = NULL;
+            }
+            else
+            {
+                free(p);
+                u.data2->firstchild = NULL;
+            }
+
+            if (!u.data->parents->firstchild || u.data->parents->firstchild == u.data->nextsib)
+                u.data->parents->firstchild = u.data;
+            else
+            {
+                tree p = u.data->parents->firstchild;
+                while (p->nextsib && p->nextsib != u.data->nextsib)
+                    p = p->nextsib;
+                p->nextsib = u.data;
+            }
+        }
+        else
+            return FALSE;
+
         return TRUE;
     }
     return FALSE;

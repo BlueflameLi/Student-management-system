@@ -2,6 +2,7 @@
 #define _COMMAND_H_
 
 #include "print.h"
+#include "stack.h"
 //命令帮助
 char *cmdhelp[20];
 
@@ -13,6 +14,9 @@ char *findhelp[15];
 
 //lr显示的文字
 char *lrstr[5];
+
+//撤销栈
+stack undoStack;
 
 //目前已去除相关命令，仅用于测试
 int addschool(tree root, char *schoolname);
@@ -69,4 +73,6 @@ int search2(tree p, char *str[], int id, int sex, int age, tree *list, int *k);
 //搜索
 int search(tree p, tree root, char *str);
 
+//撤销
+int undo();
 #endif

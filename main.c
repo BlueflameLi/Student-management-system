@@ -3,7 +3,7 @@
 
 int main()
 {
-    puts("请最大化");
+    puts("请将窗口最大化后，回车进入系统");
     {
         char ch;
         while ((ch = getchar()) != '\n')
@@ -132,6 +132,5 @@ int main()
                 update(root, p);
         prhead(NULL);
     }
-    system("pause");
     return 0;
 }
